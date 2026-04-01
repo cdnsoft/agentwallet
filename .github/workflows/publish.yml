@@ -24,8 +24,12 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           clawhub login --token $CLAWHUB_TOKEN --no-browser
-          clawhub publish . \
-            --slug agentwallet \
-            --name "agentwallet" \
-            --version $VERSION \
-            --changelog "Release $VERSION"
+          for i in 1 2 3; do
+            clawhub publish . \
+              --slug agentwallet \
+              --name "agentwallet" \
+              --version $VERSION \
+              --changelog "Release $VERSION" && break
+            echo "Attempt $i failed, retrying in 30s..."
+            sleep 30
+          done
