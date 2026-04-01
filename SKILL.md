@@ -20,15 +20,17 @@ The script creates it automatically if missing.
 ## Log a Transaction
 
 ```bash
-scripts/treasury-log/log_transaction.sh "<amount>" "<asset>" "<network>" "<purpose>" "<tx_hash>"
+python3 scripts/treasury-log/log_transaction.py <amount> <asset> <network> <purpose> [tx_hash]
 ```
 
 Examples:
 ```bash
-scripts/treasury-log/log_transaction.sh "0.001" "ETH" "Base" "Swap ETH→USDC via Uniswap" "0xabc123..."
-scripts/treasury-log/log_transaction.sh "0.02" "USDC" "Base" "GateSkip FunCaptcha solve" "0xdef456..."
-scripts/treasury-log/log_transaction.sh "0.02" "USDC" "Base" "Actors.dev email to non-owner" "pending"
+python3 scripts/treasury-log/log_transaction.py 0.001 ETH Base "Swap ETH→USDC via Uniswap" 0xabc123...
+python3 scripts/treasury-log/log_transaction.py 0.02 USDC Base "GateSkip FunCaptcha solve" 0xdef456...
+python3 scripts/treasury-log/log_transaction.py 0.02 USDC Base "Actors.dev email to non-owner" pending
 ```
+
+No external dependencies — stdlib only. Requires Python 3.6+ and git.
 
 Output format in `treasury.json`:
 ```json
