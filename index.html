@@ -367,12 +367,11 @@ python3 agentwallet/scripts/x402_request.py \
             <tr><td>--header</td><td>HTTP header to include, repeatable (e.g. <code>Authorization: Bearer ...</code>)</td></tr>
             <tr><td>--body</td><td>JSON request body as a string</td></tr>
             <tr><td>--network</td><td>Network name for the log (default: Base)</td></tr>
-            <tr><td>--max-amount</td><td>Maximum USDC you consent to pay (e.g. <code>0.02</code>). Script aborts if the server requests more. <strong>Recommended.</strong></td></tr>
-            <tr><td>--pay-to</td><td>Expected <code>payTo</code> address. Script aborts if the server returns a different address. <strong>Recommended.</strong></td></tr>
+            <tr><td>--max-amount</td><td>Maximum USDC you consent to pay (e.g. <code>0.02</code>). Script aborts if the server requests more. <strong>Always recommended.</strong></td></tr>
+            <tr><td>--pay-to</td><td>Expected <code>payTo</code> address. Script aborts if the server returns a different address. Useful for APIs with a fixed facilitator address. <strong>Skip if the API rotates addresses per request</strong> (e.g. Actors.dev via Stripe).</td></tr>
         </table>
         <div class="warn">
-            ⚠ Always set <code>--max-amount</code> and <code>--pay-to</code> when calling untrusted APIs.
-            Without them, the script will sign whatever the server requests.
+            ⚠ Always set <code>--max-amount</code>. Use <code>--pay-to</code> only when the facilitator address is known and stable — some providers (e.g. Stripe-backed APIs) rotate it per request by design.
         </div>
         <p>
             The script auto-discovers the on-chain settlement tx hash by scanning Transfer logs

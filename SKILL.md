@@ -32,7 +32,7 @@ python3 agentwallet/scripts/x402_request.py \
     --pay-to 0x3604712bd95ba2ff36b624f3ffeb6b73b34604ea
 ```
 Handles full 402→sign EIP-712→retry flow. Logs USDC spend automatically.
-Always set `--max-amount` and `--pay-to` to prevent signing unexpected amounts or addresses.
+Always set `--max-amount`. Use `--pay-to` only when the facilitator address is stable — some providers (e.g. Actors.dev via Stripe) rotate it per request by design, so `--pay-to` would always abort.
 
 **Uniswap V3 swap (e.g. ETH → USDC on Base):**
 ```bash
