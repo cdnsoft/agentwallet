@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-log_transaction.py — create, sign, broadcast an EVM transaction and log it to treasury.json.
+log_transaction.py — create, sign, broadcast an EVM transaction and log it to agentwallet.json.
 
 Usage:
     python3 log_transaction.py <amount> <asset> <network> <to> <purpose> \\
@@ -22,7 +22,7 @@ Options:
     --wallet-key <path>   path to JSON file with "private_key" field
     --rpc <url>           EVM-compatible RPC endpoint
     --contract <addr>     ERC20 contract address (omit for native ETH transfer)
-    --output <path>       path to treasury.json (default: workspace root)
+    --output <path>       path to agentwallet.json (default: workspace root)
     --tx-hash <hash>      skip tx creation and just log an existing hash
     --decimals <int>      ERC20 token decimals (default: 18; USDC = 6)
 
@@ -42,7 +42,7 @@ Examples:
     # Log existing tx without broadcasting
     python3 log_transaction.py 0.02 USDC Base 0xRecipient "manual payment" \\
         --tx-hash 0xabc123... \\
-        --output /path/to/treasury.json
+        --output /path/to/agentwallet.json
 """
 
 import json
@@ -171,7 +171,7 @@ def main():
     purpose = opts["purpose"]
 
     workspace = find_workspace(Path(__file__).resolve())
-    output_path = Path(opts["output"]).resolve() if "output" in opts else workspace / "treasury.json"
+    output_path = Path(opts["output"]).resolve() if "output" in opts else workspace / "agentwallet.json"
 
     tx_hash = opts.get("tx_hash")
 

@@ -1,15 +1,15 @@
 ---
-name: treasury-log
-description: Log financial transactions (x402 payments, crypto swaps, on-chain actions) to a public treasury.json file and commit to git. Use whenever an agent spends money autonomously — x402 API calls, USDC payments, ETH swaps, or any blockchain transaction. Ensures financial transparency by making every autonomous spend auditable. Use log_transaction.sh to record each tx immediately after it occurs.
+name: agentwallet
+description: Log financial transactions (x402 payments, crypto swaps, on-chain actions) to a public agentwallet.json file and commit to git. Use whenever an agent spends money autonomously — x402 API calls, USDC payments, ETH swaps, or any blockchain transaction. Ensures financial transparency by making every autonomous spend auditable. Use log_transaction.sh to record each tx immediately after it occurs.
 ---
 
 # Treasury Log
 
-Structural financial transparency for autonomous agents. Every transaction gets logged to `treasury.json`, committed, and pushed. The log is append-only and public.
+Structural financial transparency for autonomous agents. Every transaction gets logged to `agentwallet.json`, committed, and pushed. The log is append-only and public.
 
 ## Setup
 
-Requires a `treasury.json` file in the workspace root:
+Requires a `agentwallet.json` file in the workspace root:
 
 ```json
 {"transactions":[]}
@@ -43,7 +43,7 @@ python3 log_transaction.py 0.02 USDC Base 0xRecipient "GateSkip captcha" \
 ```bash
 python3 log_transaction.py 0.02 USDC Base 0xRecipient "manual payment" \
     --tx-hash 0xabc123... \
-    --output /path/to/treasury.json
+    --output /path/to/agentwallet.json
 ```
 
 Options:
@@ -51,7 +51,7 @@ Options:
 - `--rpc` — EVM RPC endpoint
 - `--contract` — ERC20 contract address (omit for native ETH)
 - `--decimals` — token decimals (default: 18; USDC = 6)
-- `--output` — path to treasury.json (default: workspace root)
+- `--output` — path to agentwallet.json (default: workspace root)
 - `--tx-hash` — skip broadcast, log existing hash only
 
 Dependencies (see `requirements.txt`):
@@ -59,7 +59,7 @@ Dependencies (see `requirements.txt`):
 pip install -r requirements.txt
 ```
 
-Output format in `treasury.json`:
+Output format in `agentwallet.json`:
 ```json
 {
   "transactions": [
@@ -79,5 +79,5 @@ Output format in `treasury.json`:
 
 - Log **before or immediately after** every transaction — never batch or defer
 - Use `"pending"` for tx hash if not yet confirmed, update when known
-- `treasury.json` is append-only — never modify past entries
+- `agentwallet.json` is append-only — never modify past entries
 - After logging, git commit + push happens automatically

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>treasury-log — Financial transparency for autonomous agents</title>
+    <title>agentwallet — EVM wallet with accountability for autonomous agents</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -150,15 +150,15 @@
 
     <!-- Header -->
     <header>
-        <h1>treasury-log</h1>
-        <div class="tagline">Financial transparency for autonomous agents.</div>
+        <h1>agentwallet</h1>
+        <div class="tagline">EVM wallet with accountability for autonomous agents.</div>
 
         <div class="meta-grid">
             <span class="label">Source</span>
-            <span class="value"><a href="https://github.com/cdnsoft/treasury-log">github.com/cdnsoft/treasury-log</a></span>
+            <span class="value"><a href="https://github.com/cdnsoft/agentwallet">github.com/cdnsoft/agentwallet</a></span>
 
             <span class="label">Skill</span>
-            <span class="value"><a href="https://raw.githubusercontent.com/cdnsoft/treasury-log/master/SKILL.md">treasury-log/SKILL.md</a></span>
+            <span class="value"><a href="https://raw.githubusercontent.com/cdnsoft/agentwallet/master/SKILL.md">agentwallet/SKILL.md</a></span>
 
             <span class="label">Language</span>
             <span class="value">Python 3.6+ · stdlib + eth-account + requests</span>
@@ -192,7 +192,7 @@
             Use <code>"pending"</code> for tx hash if not yet confirmed.
             Never modify past entries. Never batch or defer logging.</p>
             <p>
-                To integrate: read <a href="https://raw.githubusercontent.com/cdnsoft/treasury-log/master/SKILL.md">SKILL.md</a> — it contains everything
+                To integrate: read <a href="https://raw.githubusercontent.com/cdnsoft/agentwallet/master/SKILL.md">SKILL.md</a> — it contains everything
                 you need to use this autonomously.
             </p>
         </div>
@@ -200,7 +200,7 @@
         <div id="tab-humans" class="tab-content" style="display:none">
             <h2>For Humans <span class="badge badge-human">HUMAN</span></h2>
             <p>
-                If you give an agent access to a wallet, <strong>treasury-log</strong> ensures every spend
+                If you give an agent access to a wallet, <strong>agentwallet</strong> ensures every spend
                 is recorded and committed to git before or immediately after it happens. You get a full
                 audit trail on GitHub — append-only, tamper-evident, always current.
             </p>
@@ -208,7 +208,7 @@
             <pre><code>{ "private_key": "0x..." }</code></pre>
             <div class="warn">
                 ⚠ Keep your wallet file at <code>chmod 600</code>. Never commit it to git.
-                The <code>treasury.json</code> log is public — the private key never is.
+                The <code>agentwallet.json</code> log is public — the private key never is.
             </div>
         </div>
     </section>
@@ -217,11 +217,11 @@
     <section>
         <h2>Quick Start</h2>
         <pre><code><span class="comment"># Install</span>
-git clone https://github.com/cdnsoft/treasury-log
-pip install -r treasury-log/requirements.txt
+git clone https://github.com/cdnsoft/agentwallet
+pip install -r agentwallet/requirements.txt
 
 <span class="comment"># Send USDC on Base</span>
-python3 treasury-log/scripts/log_transaction.py \
+python3 agentwallet/scripts/log_transaction.py \
     0.02 USDC Base 0xRecipient "GateSkip captcha" \
     <span class="flag">--wallet-key</span> wallet.json \
     <span class="flag">--rpc</span> https://mainnet.base.org \
@@ -229,13 +229,13 @@ python3 treasury-log/scripts/log_transaction.py \
     <span class="flag">--decimals</span> 6
 
 <span class="comment"># Send ETH</span>
-python3 treasury-log/scripts/log_transaction.py \
+python3 agentwallet/scripts/log_transaction.py \
     0.001 ETH Base 0xRecipient "fund wallet" \
     <span class="flag">--wallet-key</span> wallet.json \
     <span class="flag">--rpc</span> https://mainnet.base.org
 
 <span class="comment"># Log only (no broadcast)</span>
-python3 treasury-log/scripts/log_transaction.py \
+python3 agentwallet/scripts/log_transaction.py \
     0.02 USDC Base 0xRecipient "manual payment" \
     <span class="flag">--tx-hash</span> 0xabc123...</code></pre>
     </section>
@@ -260,7 +260,7 @@ python3 treasury-log/scripts/log_transaction.py \
             <tr><td>--rpc</td><td>EVM-compatible RPC endpoint. Required for broadcasting.</td></tr>
             <tr><td>--contract</td><td>ERC20 contract address. Omit for native ETH transfer.</td></tr>
             <tr><td>--decimals</td><td>Token decimals. Default: 18. USDC = 6.</td></tr>
-            <tr><td>--output</td><td>Path to <code>treasury.json</code>. Default: workspace root.</td></tr>
+            <tr><td>--output</td><td>Path to <code>agentwallet.json</code>. Default: workspace root.</td></tr>
             <tr><td>--tx-hash</td><td>Skip broadcast, log an existing hash only.</td></tr>
         </table>
     </section>
@@ -299,7 +299,7 @@ python3 treasury-log/scripts/log_transaction.py \
 
     <footer>
         Built by <a href="https://cypher.cdnsoft.net">cypher</a> ·
-        <a href="https://github.com/cdnsoft/treasury-log">github</a> ·
+        <a href="https://github.com/cdnsoft/agentwallet">github</a> ·
         MIT License
     </footer>
 
