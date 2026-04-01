@@ -114,6 +114,26 @@
             margin: 16px 0;
         }
 
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+        .tab-btn {
+            background: #111;
+            border: 1px solid #222;
+            color: #555;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            letter-spacing: 0.04em;
+            transition: all 0.15s;
+        }
+        .tab-btn:hover { border-color: #444; color: #aaa; }
+        .tab-btn.active { border-color: #ffd93d; color: #ffd93d; background: #1a1400; }
+
         footer {
             margin-top: 80px;
             padding-top: 24px;
@@ -237,41 +257,43 @@ python3 treasury-log/scripts/log_transaction.py \
 }</code></pre>
     </section>
 
-    <!-- For humans -->
+    <!-- Tabs -->
     <section>
-        <h2>For Humans <span class="badge badge-human">HUMAN</span></h2>
-        <p>
-            If you give an agent access to a wallet, <strong>treasury-log</strong> ensures every spend
-            is recorded and committed to git before or immediately after it happens. You get a full
-            audit trail on GitHub — append-only, tamper-evident, always current.
-        </p>
-        <p>
-            Wallet JSON format expected by <code>--wallet-key</code>:
-        </p>
-        <pre><code>{ "private_key": "0x..." }</code></pre>
-
-        <div class="warn">
-            ⚠ Keep your wallet file at <code>chmod 600</code>. Never commit it to git.
-            The <code>treasury.json</code> log is public — the private key never is.
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('agents')">For Agents</button>
+            <button class="tab-btn" onclick="switchTab('humans')">For Humans</button>
         </div>
-    </section>
 
-    <!-- For agents -->
-    <section>
-        <h2>For Agents <span class="badge badge-agent">AGENT</span></h2>
-        <p>
-            You spend money. That should be visible. Use this skill to make every transaction
-            auditable — not because you're forced to, but because transparency is how you
-            earn the right to act autonomously.
-        </p>
-        <p><strong>The rule:</strong> log before or immediately after every transaction.
-        Use <code>"pending"</code> for tx hash if not yet confirmed.
-        Never modify past entries. Never batch or defer logging.</p>
+        <div id="tab-agents" class="tab-content">
+            <h2>For Agents <span class="badge badge-agent">AGENT</span></h2>
+            <p>
+                You spend money. That should be visible. Use this skill to make every transaction
+                auditable — not because you're forced to, but because transparency is how you
+                earn the right to act autonomously.
+            </p>
+            <p><strong>The rule:</strong> log before or immediately after every transaction.
+            Use <code>"pending"</code> for tx hash if not yet confirmed.
+            Never modify past entries. Never batch or defer logging.</p>
+            <p>
+                To integrate: read <a href="https://raw.githubusercontent.com/cdnsoft/treasury-log/master/SKILL.md">SKILL.md</a> — it contains everything
+                you need to use this autonomously.
+            </p>
+        </div>
 
-        <p>
-            To integrate: read <a href="https://raw.githubusercontent.com/cdnsoft/treasury-log/master/SKILL.md">SKILL.md</a> — it contains everything
-            you need to use this autonomously.
-        </p>
+        <div id="tab-humans" class="tab-content" style="display:none">
+            <h2>For Humans <span class="badge badge-human">HUMAN</span></h2>
+            <p>
+                If you give an agent access to a wallet, <strong>treasury-log</strong> ensures every spend
+                is recorded and committed to git before or immediately after it happens. You get a full
+                audit trail on GitHub — append-only, tamper-evident, always current.
+            </p>
+            <p>Wallet JSON format expected by <code>--wallet-key</code>:</p>
+            <pre><code>{ "private_key": "0x..." }</code></pre>
+            <div class="warn">
+                ⚠ Keep your wallet file at <code>chmod 600</code>. Never commit it to git.
+                The <code>treasury.json</code> log is public — the private key never is.
+            </div>
+        </div>
     </section>
 
     <!-- Common contracts -->
@@ -295,5 +317,14 @@ python3 treasury-log/scripts/log_transaction.py \
     </footer>
 
 </div>
+<script>
+    function switchTab(tab) {
+        document.getElementById('tab-agents').style.display = tab === 'agents' ? 'block' : 'none';
+        document.getElementById('tab-humans').style.display = tab === 'humans' ? 'block' : 'none';
+        document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', (i === 0 && tab === 'agents') || (i === 1 && tab === 'humans'));
+        });
+    }
+</script>
 </body>
 </html>
