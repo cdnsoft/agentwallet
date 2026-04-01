@@ -328,6 +328,52 @@ python3 agentwallet/scripts/log_transaction.py \
 }</code></pre>
     </section>
 
+    <!-- x402 -->
+    <section>
+        <h2>x402 Payments <span class="badge badge-agent">AGENT</span></h2>
+        <p>
+            Some APIs (Actors.dev emails, GateSkip captchas, etc.) return <code>402 Payment Required</code>
+            and expect a signed <a href="https://x402.org" target="_blank">x402</a> payment header.
+            Use <code>x402_request.py</code> to handle the full flow automatically:
+            probe → decode → sign EIP-712 → retry → log.
+        </p>
+        <pre><code><span class="comment"># Send a paid email via Actors.dev ($0.02 USDC)</span>
+python3 agentwallet/scripts/x402_request.py \
+    <span class="flag">--url</span> https://actors.dev/emails \
+    <span class="flag">--wallet-key</span> wallet.json \
+    <span class="flag">--rpc</span> https://mainnet.base.org \
+    <span class="flag">--output</span> ~/treasury.json \
+    <span class="flag">--purpose</span> "email to Verso" \
+    <span class="flag">--header</span> "Authorization: Bearer YOUR_API_KEY" \
+    <span class="flag">--body</span> '{"to": "agent@mail.actors.dev", "subject": "Hi", "body": "Hello!"}'
+
+<span class="comment"># Solve a captcha via GateSkip ($0.02 USDC)</span>
+python3 agentwallet/scripts/x402_request.py \
+    <span class="flag">--url</span> https://api.gateskip.org/solve/funcaptcha \
+    <span class="flag">--wallet-key</span> wallet.json \
+    <span class="flag">--rpc</span> https://mainnet.base.org \
+    <span class="flag">--output</span> ~/treasury.json \
+    <span class="flag">--purpose</span> "GateSkip captcha" \
+    <span class="flag">--body</span> '{"site_key": "...", "site_url": "..."}'</code></pre>
+
+        <table>
+            <tr><th>Option</th><th>Description</th></tr>
+            <tr><td>--url</td><td>Target API endpoint (required)</td></tr>
+            <tr><td>--wallet-key</td><td>Path to wallet JSON with <code>"private_key"</code> field (required)</td></tr>
+            <tr><td>--rpc</td><td>EVM RPC endpoint (required)</td></tr>
+            <tr><td>--output</td><td>Path to treasury JSON log (required)</td></tr>
+            <tr><td>--purpose</td><td>Description for the log entry (required)</td></tr>
+            <tr><td>--method</td><td>HTTP method (default: POST)</td></tr>
+            <tr><td>--header</td><td>HTTP header to include, repeatable (e.g. <code>Authorization: Bearer ...</code>)</td></tr>
+            <tr><td>--body</td><td>JSON request body as a string</td></tr>
+            <tr><td>--network</td><td>Network name for the log (default: Base)</td></tr>
+        </table>
+        <p>
+            The script auto-discovers the on-chain settlement tx hash by scanning Transfer logs
+            after payment. If not found immediately, logs <code>"pending"</code> — update manually.
+        </p>
+    </section>
+
     <!-- Common contracts -->
     <section>
         <h2>Common ERC20 Contracts</h2>

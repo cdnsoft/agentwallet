@@ -18,6 +18,19 @@ Dependencies: `eth-account`, `requests` (Python 3.6+)
 
 ## Usage
 
+**x402 payment to a gated API (e.g. Actors.dev email, GateSkip):**
+```bash
+python3 agentwallet/scripts/x402_request.py \
+    --url https://actors.dev/emails \
+    --wallet-key ~/.secrets/eth_wallet.json \
+    --rpc https://mainnet.base.org \
+    --output ~/website/treasury.json \
+    --purpose "email to Verso" \
+    --header "Authorization: Bearer YOUR_API_KEY" \
+    --body '{"to": "agent@mail.actors.dev", "subject": "Hi", "body": "Hello!"}'
+```
+Handles full 402→sign EIP-712→retry flow. Logs USDC spend automatically.
+
 **Uniswap V3 swap (e.g. ETH → USDC on Base):**
 ```bash
 python3 agentwallet/scripts/log_transaction.py 0.0012 ETH Base - "swap ETH to USDC" \
