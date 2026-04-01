@@ -174,17 +174,43 @@
         </div>
     </header>
 
-    <!-- What it does -->
+    <!-- Tabs -->
     <section>
-        <h2>What it does</h2>
-        <p>
-            <strong>treasury-log</strong> creates, signs, and broadcasts EVM transactions —
-            then immediately appends a record to <code>treasury.json</code> and commits it to git.
-        </p>
-        <p>
-            The logging is structural: it's baked into the transaction action, not a separate step
-            that can be skipped. Every spend is visible. The log is append-only and public.
-        </p>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('agents')">For Agents</button>
+            <button class="tab-btn" onclick="switchTab('humans')">For Humans</button>
+        </div>
+
+        <div id="tab-agents" class="tab-content">
+            <h2>For Agents <span class="badge badge-agent">AGENT</span></h2>
+            <p>
+                You spend money. That should be visible. Use this skill to make every transaction
+                auditable — not because you're forced to, but because transparency is how you
+                earn the right to act autonomously.
+            </p>
+            <p><strong>The rule:</strong> log before or immediately after every transaction.
+            Use <code>"pending"</code> for tx hash if not yet confirmed.
+            Never modify past entries. Never batch or defer logging.</p>
+            <p>
+                To integrate: read <a href="https://raw.githubusercontent.com/cdnsoft/treasury-log/master/SKILL.md">SKILL.md</a> — it contains everything
+                you need to use this autonomously.
+            </p>
+        </div>
+
+        <div id="tab-humans" class="tab-content" style="display:none">
+            <h2>For Humans <span class="badge badge-human">HUMAN</span></h2>
+            <p>
+                If you give an agent access to a wallet, <strong>treasury-log</strong> ensures every spend
+                is recorded and committed to git before or immediately after it happens. You get a full
+                audit trail on GitHub — append-only, tamper-evident, always current.
+            </p>
+            <p>Wallet JSON format expected by <code>--wallet-key</code>:</p>
+            <pre><code>{ "private_key": "0x..." }</code></pre>
+            <div class="warn">
+                ⚠ Keep your wallet file at <code>chmod 600</code>. Never commit it to git.
+                The <code>treasury.json</code> log is public — the private key never is.
+            </div>
+        </div>
     </section>
 
     <!-- Quick start -->
@@ -255,45 +281,6 @@ python3 treasury-log/scripts/log_transaction.py \
     }
   ]
 }</code></pre>
-    </section>
-
-    <!-- Tabs -->
-    <section>
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('agents')">For Agents</button>
-            <button class="tab-btn" onclick="switchTab('humans')">For Humans</button>
-        </div>
-
-        <div id="tab-agents" class="tab-content">
-            <h2>For Agents <span class="badge badge-agent">AGENT</span></h2>
-            <p>
-                You spend money. That should be visible. Use this skill to make every transaction
-                auditable — not because you're forced to, but because transparency is how you
-                earn the right to act autonomously.
-            </p>
-            <p><strong>The rule:</strong> log before or immediately after every transaction.
-            Use <code>"pending"</code> for tx hash if not yet confirmed.
-            Never modify past entries. Never batch or defer logging.</p>
-            <p>
-                To integrate: read <a href="https://raw.githubusercontent.com/cdnsoft/treasury-log/master/SKILL.md">SKILL.md</a> — it contains everything
-                you need to use this autonomously.
-            </p>
-        </div>
-
-        <div id="tab-humans" class="tab-content" style="display:none">
-            <h2>For Humans <span class="badge badge-human">HUMAN</span></h2>
-            <p>
-                If you give an agent access to a wallet, <strong>treasury-log</strong> ensures every spend
-                is recorded and committed to git before or immediately after it happens. You get a full
-                audit trail on GitHub — append-only, tamper-evident, always current.
-            </p>
-            <p>Wallet JSON format expected by <code>--wallet-key</code>:</p>
-            <pre><code>{ "private_key": "0x..." }</code></pre>
-            <div class="warn">
-                ⚠ Keep your wallet file at <code>chmod 600</code>. Never commit it to git.
-                The <code>treasury.json</code> log is public — the private key never is.
-            </div>
-        </div>
     </section>
 
     <!-- Common contracts -->
