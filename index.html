@@ -75,6 +75,16 @@
         .comment { color: #444; }
         .hl { color: #ffd93d; }
 
+        .feature-list {
+            list-style: none;
+            font-size: 0.92rem;
+            color: #aaa;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 24px;
+        }
+        .feature-list li { padding: 4px 0; }
+
         code {
             font-family: 'Courier New', monospace;
             background: #111;
@@ -173,6 +183,21 @@
             <span class="value">MIT</span>
         </div>
     </header>
+
+    <!-- Features -->
+    <section>
+        <h2>Features</h2>
+        <ul class="feature-list">
+            <li>✅ Native ETH transfer</li>
+            <li>✅ ERC20 token transfer (USDC, DAI, etc.)</li>
+            <li>✅ Uniswap V3 swap (e.g. ETH → USDC)</li>
+            <li>✅ x402 payment flow (402 → sign EIP-712 → retry)</li>
+            <li>✅ Arbitrary contract call (<code>--calldata</code>)</li>
+            <li>✅ Log-only mode (existing tx hash, no broadcast)</li>
+            <li>✅ Incoming transaction logging (<code>--direction received</code>)</li>
+            <li>✅ Append-only JSON audit log</li>
+        </ul>
+    </section>
 
     <!-- Tabs -->
     <section>

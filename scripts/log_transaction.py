@@ -80,7 +80,7 @@ def parse_args(argv):
     flags = [
         "--wallet-key", "--rpc", "--contract", "--output", "--tx-hash",
         "--decimals", "--direction", "--swap-to", "--decimals-out", "--fee", "--asset-out", "--min-out",
-        "--amount", "--asset", "--network", "--from", "--to", "--purpose"
+        "--amount", "--asset", "--network", "--from", "--to", "--purpose", "--calldata"
     ]
     positional = []
 
@@ -345,6 +345,34 @@ def main():
             "purpose": purpose, "tx_hash": tx_hash,
         })
         print(f"✅ Swapped {amount} {asset} → {amount_out:.6f} {asset_out}")
+        return
+
+    # ── Arbitrary contract call ───────────────────────────────────────────────
+    if "calldata" in opts:
+        calldata_hex = opts["calldata"]
+        if not calldata_hex.startswith("0x"):
+            calldata_hex = "0x" + calldata_hex
+        amount_float = float(amount) if amount else 0.0
+        tx_fields = {
+            "from":  account.address,
+            "to":    to,
+            "value": int(amount_float * 10**18),
+            "data":  calldata_hex,
+        }
+        print(f"Sending contract call to {to} ({amount} {asset}) on {network}...")
+        tx_hash = sign_and_send(account, rpc_url, tx_fields)
+        print(f"Tx hash: {tx_hash}")
+        log_to_wallet(output_path, {
+            "date":      datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "direction": "sent",
+            "amount":    amount,
+            "asset":     asset,
+            "network":   network,
+            "to":        to,
+            "purpose":   purpose,
+            "tx_hash":   tx_hash,
+        })
+        print(f"✅ Contract call sent and logged")
         return
 
     # ── ERC20 or ETH transfer ─────────────────────────────────────────────────

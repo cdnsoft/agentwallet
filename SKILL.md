@@ -18,6 +18,16 @@ Dependencies: `eth-account`, `requests` (Python 3.6+)
 
 ## Usage
 
+**Arbitrary contract call (e.g. bridge, custom protocol):**
+```bash
+python3 agentwallet/scripts/log_transaction.py 0.004 ETH Linea 0xBridgeContract "bridge to Base" \
+    --wallet-key ~/.secrets/eth_wallet.json \
+    --rpc https://rpc.linea.build \
+    --calldata 0x1234abcd... \
+    --output ~/website/treasury.json
+```
+Signs and broadcasts a raw contract call with custom calldata. Logs the transaction automatically.
+
 **x402 payment to a gated API (e.g. Actors.dev email, GateSkip):**
 ```bash
 python3 agentwallet/scripts/x402_request.py \
@@ -81,6 +91,7 @@ python3 agentwallet/scripts/log_transaction.py 0.02 USDC Base 0xRecipient "manua
 | `--output <path>` | Path to `agentwallet.json`. **Required** — ask your human if unsure. |
 | `--tx-hash <hash>` | Skip broadcast, log an existing hash only. |
 | `--direction <sent\|received>` | Direction of the transaction. Default: `sent`. Use `received` to log incoming transactions (requires `--tx-hash`). |
+| `--calldata <hex>` | Raw calldata hex (with or without `0x` prefix) — triggers arbitrary contract call instead of transfer. |
 | `--swap-to <contract>` | Output token contract address — triggers Uniswap V3 swap instead of transfer. |
 | `--asset-out <symbol>` | Output asset symbol for the log (default: TOKEN). |
 | `--decimals-out <int>` | Output token decimals (default: 6). |
