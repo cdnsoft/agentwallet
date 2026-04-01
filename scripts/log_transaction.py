@@ -9,22 +9,24 @@ Usage:
         [--contract <addr>]   \\
         [--output <path>]     \\
         [--tx-hash <hash>]    \\
-        [--decimals <int>]
+        [--decimals <int>]    \\
+        [--direction <sent|received>]
 
 Arguments:
-    amount      numeric amount to send (e.g. 0.02)
+    amount      numeric amount (e.g. 0.02)
     asset       asset symbol (e.g. ETH, USDC)
     network     network name for the log (e.g. Base, Ethereum)
-    to          recipient address (0x...)
+    to          recipient address for sent, or sender address for received (0x...)
     purpose     description of the transaction
 
 Options:
-    --wallet-key <path>   path to JSON file with "private_key" field
-    --rpc <url>           EVM-compatible RPC endpoint
-    --contract <addr>     ERC20 contract address (omit for native ETH transfer)
-    --output <path>       path to agentwallet.json (required — ask your human if unsure)
-    --tx-hash <hash>      skip tx creation and just log an existing hash
-    --decimals <int>      ERC20 token decimals (default: 18; USDC = 6)
+    --wallet-key <path>          path to JSON file with "private_key" field
+    --rpc <url>                  EVM-compatible RPC endpoint
+    --contract <addr>            ERC20 contract address (omit for native ETH transfer)
+    --output <path>              path to agentwallet.json (required — ask your human if unsure)
+    --tx-hash <hash>             skip tx creation and just log an existing hash
+    --decimals <int>             ERC20 token decimals (default: 18; USDC = 6)
+    --direction <sent|received>  direction of the transaction (default: sent)
 
 Examples:
     # Native ETH transfer
@@ -75,7 +77,7 @@ def parse_args(argv):
     args = argv[1:]
     opts = {}
 
-    flags = ["--wallet-key", "--rpc", "--contract", "--output", "--tx-hash", "--decimals"]
+    flags = ["--wallet-key", "--rpc", "--contract", "--output", "--tx-hash", "--decimals", "--direction"]
     positional = []
 
     i = 0
@@ -173,17 +175,41 @@ def main():
     output_path = Path(opts["output"]).expanduser().resolve()
 
     tx_hash = opts.get("tx_hash")
+    direction = opts.get("direction", "sent")
 
-    # If tx_hash provided, skip broadcasting — just log
+    if direction not in ("sent", "received"):
+        print("⚠️  --direction must be 'sent' or 'received'")
+        sys.exit(1)
+
+    # If received, just log — no broadcasting
+    if direction == "received":
+        if not tx_hash:
+            print("⚠️  --tx-hash is required when logging a received transaction")
+            sys.exit(1)
+        entry = {
+            "date":      datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "direction": "received",
+            "amount":    amount,
+            "asset":     asset,
+            "network":   network,
+            "from":      to,
+            "purpose":   purpose,
+            "tx_hash":   tx_hash,
+        }
+        log_to_wallet(output_path, entry)
+        return
+
+    # If tx_hash provided, skip broadcasting — just log as sent
     if tx_hash:
         entry = {
-            "date":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "amount":  amount,
-            "asset":   asset,
-            "network": network,
-            "to":      to,
-            "purpose": purpose,
-            "tx_hash": tx_hash,
+            "date":      datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "direction": "sent",
+            "amount":    amount,
+            "asset":     asset,
+            "network":   network,
+            "to":        to,
+            "purpose":   purpose,
+            "tx_hash":   tx_hash,
         }
         log_to_wallet(output_path, entry)
         return
@@ -256,13 +282,14 @@ def main():
     print(f"Tx hash: {tx_hash}")
 
     entry = {
-        "date":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "amount":  amount,
-        "asset":   asset,
-        "network": network,
-        "to":      to,
-        "purpose": purpose,
-        "tx_hash": tx_hash,
+        "date":      datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "direction": "sent",
+        "amount":    amount,
+        "asset":     asset,
+        "network":   network,
+        "to":        to,
+        "purpose":   purpose,
+        "tx_hash":   tx_hash,
     }
     log_to_wallet(output_path, entry)
 

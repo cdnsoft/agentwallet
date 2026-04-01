@@ -54,6 +54,7 @@ python3 agentwallet/scripts/log_transaction.py 0.02 USDC Base 0xRecipient "manua
 | `--decimals <int>` | Token decimals. Default: 18. USDC = 6. |
 | `--output <path>` | Path to `agentwallet.json`. **Required** — ask your human if unsure. |
 | `--tx-hash <hash>` | Skip broadcast, log an existing hash only. |
+| `--direction <sent\|received>` | Direction of the transaction. Default: `sent`. Use `received` to log incoming transactions (requires `--tx-hash`). |
 
 ## Wallet JSON format
 
