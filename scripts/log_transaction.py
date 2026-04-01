@@ -22,7 +22,7 @@ Options:
     --wallet-key <path>   path to JSON file with "private_key" field
     --rpc <url>           EVM-compatible RPC endpoint
     --contract <addr>     ERC20 contract address (omit for native ETH transfer)
-    --output <path>       path to agentwallet.json (default: workspace root)
+    --output <path>       path to agentwallet.json (required — ask your human if unsure)
     --tx-hash <hash>      skip tx creation and just log an existing hash
     --decimals <int>      ERC20 token decimals (default: 18; USDC = 6)
 
@@ -144,12 +144,7 @@ def encode_erc20_transfer(to: str, amount_int: int) -> bytes:
     return selector + addr_padded + amount_padded
 
 
-def find_workspace(script_path: Path) -> Path:
-    import os
-    env_ws = os.environ.get("TREASURY_WORKSPACE")
-    if env_ws:
-        return Path(env_ws)
-    return script_path.parent.parent.parent.parent
+
 
 
 def log_to_wallet(log_path: Path, entry: dict):
@@ -170,8 +165,12 @@ def main():
     to      = opts["to"]
     purpose = opts["purpose"]
 
-    workspace = find_workspace(Path(__file__).resolve())
-    output_path = Path(opts["output"]).resolve() if "output" in opts else workspace / "agentwallet.json"
+    if "output" not in opts:
+        print("⚠️  --output is required: path to your agentwallet.json log file.")
+        print("    If you don't have one yet, ask your human where to store it.")
+        print("    Example: --output ~/my-wallet/agentwallet.json")
+        sys.exit(1)
+    output_path = Path(opts["output"]).expanduser().resolve()
 
     tx_hash = opts.get("tx_hash")
 
@@ -191,10 +190,14 @@ def main():
 
     # Require wallet + rpc for broadcasting
     if "wallet_key" not in opts:
-        print("Error: --wallet-key required when broadcasting a transaction")
+        print("⚠️  --wallet-key is required: path to your wallet JSON file.")
+        print("    Ask your human for the path to a wallet JSON with a 'private_key' field.")
+        print("    Example: --wallet-key ~/.secrets/eth_wallet.json")
         sys.exit(1)
     if "rpc" not in opts:
-        print("Error: --rpc required when broadcasting a transaction")
+        print("⚠️  --rpc is required: an EVM-compatible RPC endpoint URL.")
+        print("    Ask your human for an RPC URL for the target network.")
+        print("    Example: --rpc https://mainnet.base.org")
         sys.exit(1)
 
     # Load private key

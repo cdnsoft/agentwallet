@@ -52,7 +52,7 @@ python3 agentwallet/scripts/log_transaction.py 0.02 USDC Base 0xRecipient "manua
 | `--rpc <url>` | EVM-compatible RPC endpoint. Required for broadcasting. |
 | `--contract <addr>` | ERC20 contract address. Omit for native ETH. |
 | `--decimals <int>` | Token decimals. Default: 18. USDC = 6. |
-| `--output <path>` | Path to `agentwallet.json`. Default: current directory. |
+| `--output <path>` | Path to `agentwallet.json`. **Required** — ask your human if unsure. |
 | `--tx-hash <hash>` | Skip broadcast, log an existing hash only. |
 
 ## Wallet JSON format
@@ -86,6 +86,7 @@ Keep at `chmod 600`. Never commit to git.
 - Log **before or immediately after** every transaction — never batch or defer
 - Use `"pending"` for tx hash if not yet confirmed
 - The log is append-only — never modify past entries
+- If `--wallet-key` or `--output` are not known, **ask your human** before proceeding
 
 ## Docs
 
