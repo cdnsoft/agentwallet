@@ -234,6 +234,22 @@ python3 agentwallet/scripts/log_transaction.py \
     <span class="flag">--wallet-key</span> wallet.json \
     <span class="flag">--rpc</span> https://mainnet.base.org
 
+<span class="comment"># Uniswap V3 swap: ETH → USDC on Base</span>
+python3 agentwallet/scripts/log_transaction.py \
+    0.0012 ETH Base - "swap ETH to USDC" \
+    <span class="flag">--wallet-key</span> wallet.json \
+    <span class="flag">--rpc</span> https://mainnet.base.org \
+    <span class="flag">--swap-to</span> 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \
+    <span class="flag">--asset-out</span> USDC <span class="flag">--decimals-out</span> 6 \
+    <span class="flag">--min-out</span> 2.4 <span class="comment"># slippage protection</span>
+
+<span class="comment"># Log incoming transaction (no broadcast)</span>
+python3 agentwallet/scripts/log_transaction.py \
+    0.0014 ETH Base 0xSender "received from human" \
+    <span class="flag">--direction</span> received \
+    <span class="flag">--tx-hash</span> 0xabc123... \
+    <span class="flag">--output</span> ~/treasury.json
+
 <span class="comment"># Log only (no broadcast)</span>
 python3 agentwallet/scripts/log_transaction.py \
     0.02 USDC Base 0xRecipient "manual payment" \
@@ -262,6 +278,12 @@ python3 agentwallet/scripts/log_transaction.py \
             <tr><td>--decimals</td><td>Token decimals. Default: 18. USDC = 6.</td></tr>
             <tr><td>--output</td><td>Path to <code>agentwallet.json</code>. Default: workspace root.</td></tr>
             <tr><td>--tx-hash</td><td>Skip broadcast, log an existing hash only.</td></tr>
+            <tr><td>--direction</td><td><code>sent</code> (default) or <code>received</code>. Use <code>received</code> to log incoming transactions without broadcasting.</td></tr>
+            <tr><td>--swap-to</td><td>Output token contract address. Triggers a Uniswap V3 <code>exactInputSingle</code> swap instead of a direct transfer. Logs two entries automatically: asset out + asset in.</td></tr>
+            <tr><td>--asset-out</td><td>Output asset symbol for the log (e.g. <code>USDC</code>). Default: <code>TOKEN</code>.</td></tr>
+            <tr><td>--decimals-out</td><td>Output token decimals. Default: 6.</td></tr>
+            <tr><td>--fee</td><td>Uniswap V3 pool fee tier in basis points. Default: <code>500</code> (0.05%).</td></tr>
+            <tr><td>--min-out</td><td>Minimum output amount in human units (e.g. <code>2.4</code>). Enables slippage protection — swap reverts on-chain if output falls below this. Recommended for swaps &gt; $10.</td></tr>
         </table>
     </section>
 
@@ -271,13 +293,36 @@ python3 agentwallet/scripts/log_transaction.py \
         <pre><code>{
   "transactions": [
     {
-      "date":    <span class="hl">"2026-04-01T10:00:00Z"</span>,
-      "amount":  <span class="hl">"0.02"</span>,
-      "asset":   <span class="hl">"USDC"</span>,
-      "network": <span class="hl">"Base"</span>,
-      "to":      <span class="hl">"0xRecipient..."</span>,
-      "purpose": <span class="hl">"GateSkip captcha solve"</span>,
-      "tx_hash": <span class="hl">"0xabc123..."</span>
+      <span class="comment">// ERC20 transfer (sent)</span>
+      "date":      <span class="hl">"2026-04-01T10:00:00Z"</span>,
+      "direction": <span class="hl">"sent"</span>,
+      "amount":    <span class="hl">"0.02"</span>,
+      "asset":     <span class="hl">"USDC"</span>,
+      "network":   <span class="hl">"Base"</span>,
+      "to":        <span class="hl">"0xRecipient..."</span>,
+      "purpose":   <span class="hl">"GateSkip captcha solve"</span>,
+      "tx_hash":   <span class="hl">"0xabc123..."</span>
+    },
+    {
+      <span class="comment">// Swap — two entries, same tx_hash</span>
+      "date":      <span class="hl">"2026-04-01T11:00:00Z"</span>,
+      "direction": <span class="hl">"sent"</span>,
+      "amount":    <span class="hl">"0.0012"</span>,
+      "asset":     <span class="hl">"ETH"</span>,
+      "network":   <span class="hl">"Base"</span>,
+      "to":        <span class="hl">"0xUniswapRouter..."</span>,
+      "purpose":   <span class="hl">"swap ETH to USDC"</span>,
+      "tx_hash":   <span class="hl">"0xdef456..."</span>
+    },
+    {
+      "date":      <span class="hl">"2026-04-01T11:00:00Z"</span>,
+      "direction": <span class="hl">"received"</span>,
+      "amount":    <span class="hl">"2.546913"</span>,
+      "asset":     <span class="hl">"USDC"</span>,
+      "network":   <span class="hl">"Base"</span>,
+      "from":      <span class="hl">"0xUniswapRouter..."</span>,
+      "purpose":   <span class="hl">"swap ETH to USDC"</span>,
+      "tx_hash":   <span class="hl">"0xdef456..."</span>
     }
   ]
 }</code></pre>
