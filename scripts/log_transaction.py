@@ -1,96 +1,267 @@
 #!/usr/bin/env python3
 """
-log_transaction.py — append a transaction to treasury.json and commit to git.
+log_transaction.py — create, sign, broadcast an EVM transaction and log it to treasury.json.
 
 Usage:
-    python3 log_transaction.py <amount> <asset> <network> <purpose> [tx_hash] [--output <path>]
+    python3 log_transaction.py <amount> <asset> <network> <to> <purpose> \\
+        --wallet-key <path>   \\
+        --rpc <url>           \\
+        [--contract <addr>]   \\
+        [--output <path>]     \\
+        [--tx-hash <hash>]    \\
+        [--decimals <int>]
 
 Arguments:
-    amount   — numeric amount (e.g. 0.02)
-    asset    — asset symbol (e.g. USDC, ETH)
-    network  — network name (e.g. Base, Bitcoin)
-    purpose  — description of the transaction
-    tx_hash  — transaction hash or "pending" (default: pending)
+    amount      numeric amount to send (e.g. 0.02)
+    asset       asset symbol (e.g. ETH, USDC)
+    network     network name for the log (e.g. Base, Ethereum)
+    to          recipient address (0x...)
+    purpose     description for the treasury log
 
 Options:
-    --output <path>  — path to treasury.json (default: treasury.json in workspace root)
+    --wallet-key <path>   path to JSON file with "private_key" field
+    --rpc <url>           EVM-compatible RPC endpoint
+    --contract <addr>     ERC20 contract address (omit for native ETH transfer)
+    --output <path>       path to treasury.json (default: workspace root)
+    --tx-hash <hash>      skip tx creation and just log an existing hash
+    --decimals <int>      ERC20 token decimals (default: 18; USDC = 6)
 
-Example:
-    python3 log_transaction.py 0.02 USDC Base "GateSkip captcha solve" 0xabc123...
-    python3 log_transaction.py 0.02 USDC Base "GateSkip captcha solve" 0xabc... --output /path/to/treasury.json
+Examples:
+    # Native ETH transfer
+    python3 log_transaction.py 0.001 ETH Base 0xRecipient "fund wallet" \\
+        --wallet-key ~/.secrets/eth_wallet.json \\
+        --rpc https://mainnet.base.org
+
+    # USDC transfer (ERC20, 6 decimals)
+    python3 log_transaction.py 0.02 USDC Base 0xRecipient "GateSkip captcha" \\
+        --wallet-key ~/.secrets/eth_wallet.json \\
+        --rpc https://mainnet.base.org \\
+        --contract 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \\
+        --decimals 6
+
+    # Log existing tx without broadcasting
+    python3 log_transaction.py 0.02 USDC Base 0xRecipient "manual payment" \\
+        --tx-hash 0xabc123... \\
+        --output /path/to/treasury.json
 """
 
 import json
-import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+import requests
+from eth_account import Account
+from eth_account.signers.local import LocalAccount
+
+
+# ── ERC20 transfer ABI (minimal) ──────────────────────────────────────────────
+ERC20_TRANSFER_ABI = [
+    {
+        "name": "transfer",
+        "type": "function",
+        "inputs": [
+            {"name": "to",    "type": "address"},
+            {"name": "value", "type": "uint256"},
+        ],
+        "outputs": [{"name": "", "type": "bool"}],
+        "stateMutability": "nonpayable",
+    }
+]
+
+
+def parse_args(argv):
+    args = argv[1:]
+    opts = {}
+
+    flags = ["--wallet-key", "--rpc", "--contract", "--output", "--tx-hash", "--decimals"]
+    positional = []
+
+    i = 0
+    while i < len(args):
+        if args[i] in flags:
+            if i + 1 >= len(args):
+                print(f"Error: {args[i]} requires a value")
+                sys.exit(1)
+            opts[args[i].lstrip("-").replace("-", "_")] = args[i + 1]
+            i += 2
+        else:
+            positional.append(args[i])
+            i += 1
+
+    if len(positional) < 5:
+        print(__doc__)
+        sys.exit(1)
+
+    opts["amount"]  = positional[0]
+    opts["asset"]   = positional[1]
+    opts["network"] = positional[2]
+    opts["to"]      = positional[3]
+    opts["purpose"] = positional[4]
+    return opts
+
+
+def rpc_call(rpc_url: str, method: str, params: list):
+    resp = requests.post(rpc_url, json={
+        "jsonrpc": "2.0", "id": 1,
+        "method": method, "params": params,
+    }, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    if "error" in data:
+        raise RuntimeError(f"RPC error: {data['error']}")
+    return data["result"]
+
+
+def get_chain_id(rpc_url: str) -> int:
+    return int(rpc_call(rpc_url, "eth_chainId", []), 16)
+
+
+def get_nonce(rpc_url: str, address: str) -> int:
+    return int(rpc_call(rpc_url, "eth_getTransactionCount", [address, "latest"]), 16)
+
+
+def get_gas_price(rpc_url: str) -> int:
+    return int(rpc_call(rpc_url, "eth_gasPrice", []), 16)
+
+
+def estimate_gas(rpc_url: str, tx: dict) -> int:
+    return int(rpc_call(rpc_url, "eth_estimateGas", [tx]), 16)
+
+
+def send_raw(rpc_url: str, raw_tx: str) -> str:
+    return rpc_call(rpc_url, "eth_sendRawTransaction", [raw_tx])
+
+
+def encode_erc20_transfer(to: str, amount_int: int) -> bytes:
+    """Encode ERC20 transfer(address,uint256) calldata manually."""
+    # Function selector: keccak256("transfer(address,uint256)")[:4]
+    selector = bytes.fromhex("a9059cbb")
+    # ABI encode: address (padded to 32 bytes) + uint256 (padded to 32 bytes)
+    addr_padded = bytes.fromhex(to[2:].zfill(64))
+    amount_padded = amount_int.to_bytes(32, "big")
+    return selector + addr_padded + amount_padded
+
 
 def find_workspace(script_path: Path) -> Path:
-    """Walk up from script location to find workspace root, or use TREASURY_WORKSPACE env."""
     import os
     env_ws = os.environ.get("TREASURY_WORKSPACE")
     if env_ws:
         return Path(env_ws)
-    # scripts/ → treasury-log/ → projects/ → workspace/
     return script_path.parent.parent.parent.parent
 
 
+def log_to_treasury(treasury_path: Path, entry: dict):
+    if not treasury_path.exists():
+        treasury_path.write_text(json.dumps({"transactions": []}, indent=2))
+    data = json.loads(treasury_path.read_text())
+    data["transactions"].append(entry)
+    treasury_path.write_text(json.dumps(data, indent=2))
+    print(f"✅ Logged to {treasury_path}")
+
+
 def main():
-    args = sys.argv[1:]
+    opts = parse_args(sys.argv)
 
-    # Extract --output flag
-    output_path = None
-    if "--output" in args:
-        idx = args.index("--output")
-        if idx + 1 >= len(args):
-            print("Error: --output requires a path argument")
-            sys.exit(1)
-        output_path = Path(args[idx + 1])
-        args = args[:idx] + args[idx + 2:]
-
-    if len(args) < 4:
-        print("Usage: log_transaction.py <amount> <asset> <network> <purpose> [tx_hash] [--output <path>]")
-        print('Example: log_transaction.py 0.02 USDC Base "GateSkip captcha solve" 0xabc...')
-        sys.exit(1)
-
-    amount  = args[0]
-    asset   = args[1]
-    network = args[2]
-    purpose = args[3]
-    tx_hash = args[4] if len(args) > 4 else "pending"
+    amount  = opts["amount"]
+    asset   = opts["asset"]
+    network = opts["network"]
+    to      = opts["to"]
+    purpose = opts["purpose"]
 
     workspace = find_workspace(Path(__file__).resolve())
-    treasury  = output_path.resolve() if output_path else workspace / "treasury.json"
+    output_path = Path(opts["output"]).resolve() if "output" in opts else workspace / "treasury.json"
 
-    # Create treasury.json if missing
-    if not treasury.exists():
-        treasury.write_text(json.dumps({"transactions": []}, indent=2))
+    tx_hash = opts.get("tx_hash")
 
-    data = json.loads(treasury.read_text())
+    # If tx_hash provided, skip broadcasting — just log
+    if tx_hash:
+        entry = {
+            "date":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "amount":  amount,
+            "asset":   asset,
+            "network": network,
+            "to":      to,
+            "purpose": purpose,
+            "tx_hash": tx_hash,
+        }
+        log_to_treasury(output_path, entry)
+        return
+
+    # Require wallet + rpc for broadcasting
+    if "wallet_key" not in opts:
+        print("Error: --wallet-key required when broadcasting a transaction")
+        sys.exit(1)
+    if "rpc" not in opts:
+        print("Error: --rpc required when broadcasting a transaction")
+        sys.exit(1)
+
+    # Load private key
+    key_path = Path(opts["wallet_key"]).expanduser()
+    key_data = json.loads(key_path.read_text())
+    private_key = key_data.get("private_key") or key_data.get("privateKey")
+    if not private_key:
+        print(f"Error: no 'private_key' field found in {key_path}")
+        sys.exit(1)
+
+    account: LocalAccount = Account.from_key(private_key)
+    rpc_url = opts["rpc"]
+    decimals = int(opts.get("decimals", 18))
+    amount_float = float(amount)
+    amount_int = int(amount_float * (10 ** decimals))
+
+    chain_id  = get_chain_id(rpc_url)
+    nonce     = get_nonce(rpc_url, account.address)
+    gas_price = get_gas_price(rpc_url)
+
+    contract = opts.get("contract")
+
+    if contract:
+        # ERC20 transfer
+        data = encode_erc20_transfer(to, amount_int)
+        tx = {
+            "from":     account.address,
+            "to":       contract,
+            "value":    0,
+            "data":     "0x" + data.hex(),
+            "nonce":    nonce,
+            "chainId":  chain_id,
+            "gasPrice": gas_price,
+        }
+    else:
+        # Native ETH transfer (amount in wei, 18 decimals always)
+        amount_wei = int(amount_float * 10**18)
+        tx = {
+            "from":     account.address,
+            "to":       to,
+            "value":    amount_wei,
+            "data":     "0x",
+            "nonce":    nonce,
+            "chainId":  chain_id,
+            "gasPrice": gas_price,
+        }
+
+    gas = estimate_gas(rpc_url, {k: hex(v) if isinstance(v, int) else v for k, v in tx.items() if k != "from"})
+    tx["gas"] = int(gas * 1.2)  # 20% buffer
+
+    signed = account.sign_transaction(tx)
+    raw_hex = "0x" + signed.raw_transaction.hex()
+
+    print(f"Broadcasting {amount} {asset} → {to} on {network}...")
+    tx_hash = send_raw(rpc_url, raw_hex)
+    print(f"Tx hash: {tx_hash}")
 
     entry = {
         "date":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "amount":  amount,
         "asset":   asset,
         "network": network,
+        "to":      to,
         "purpose": purpose,
         "tx_hash": tx_hash,
     }
-
-    data["transactions"].append(entry)
-    treasury.write_text(json.dumps(data, indent=2))
-
-    # Git commit and push
-    subprocess.run(["git", "add", "treasury.json"], cwd=workspace, check=True)
-    subprocess.run(
-        ["git", "commit", "-m", f"treasury: {purpose} ({amount} {asset} on {network})"],
-        cwd=workspace, check=True,
-    )
-    subprocess.run(["git", "push"], cwd=workspace, check=True)
-
-    print(f"✅ Logged: {amount} {asset} on {network} — {purpose}")
+    log_to_treasury(output_path, entry)
 
 
 if __name__ == "__main__":

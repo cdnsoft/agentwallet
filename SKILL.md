@@ -20,17 +20,44 @@ The script creates it automatically if missing.
 ## Log a Transaction
 
 ```bash
-python3 scripts/treasury-log/log_transaction.py <amount> <asset> <network> <purpose> [tx_hash]
+python3 log_transaction.py <amount> <asset> <network> <to> <purpose> [options]
 ```
 
-Examples:
+**Native ETH transfer:**
 ```bash
-python3 scripts/treasury-log/log_transaction.py 0.001 ETH Base "Swap ETH→USDC via Uniswap" 0xabc123...
-python3 scripts/treasury-log/log_transaction.py 0.02 USDC Base "GateSkip FunCaptcha solve" 0xdef456...
-python3 scripts/treasury-log/log_transaction.py 0.02 USDC Base "Actors.dev email to non-owner" pending
+python3 log_transaction.py 0.001 ETH Base 0xRecipient "fund wallet" \
+    --wallet-key ~/.secrets/eth_wallet.json \
+    --rpc https://mainnet.base.org
 ```
 
-No external dependencies — stdlib only. Requires Python 3.6+ and git.
+**ERC20 transfer (e.g. USDC, 6 decimals):**
+```bash
+python3 log_transaction.py 0.02 USDC Base 0xRecipient "GateSkip captcha" \
+    --wallet-key ~/.secrets/eth_wallet.json \
+    --rpc https://mainnet.base.org \
+    --contract 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \
+    --decimals 6
+```
+
+**Log only (no broadcast):**
+```bash
+python3 log_transaction.py 0.02 USDC Base 0xRecipient "manual payment" \
+    --tx-hash 0xabc123... \
+    --output /path/to/treasury.json
+```
+
+Options:
+- `--wallet-key` — path to JSON file with `private_key` field
+- `--rpc` — EVM RPC endpoint
+- `--contract` — ERC20 contract address (omit for native ETH)
+- `--decimals` — token decimals (default: 18; USDC = 6)
+- `--output` — path to treasury.json (default: workspace root)
+- `--tx-hash` — skip broadcast, log existing hash only
+
+Dependencies (see `requirements.txt`):
+```bash
+pip install -r requirements.txt
+```
 
 Output format in `treasury.json`:
 ```json
