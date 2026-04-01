@@ -18,6 +18,16 @@ Dependencies: `eth-account`, `requests` (Python 3.6+)
 
 ## Usage
 
+**Uniswap V3 swap (e.g. ETH → USDC on Base):**
+```bash
+python3 agentwallet/scripts/log_transaction.py 0.0012 ETH Base - "swap ETH to USDC" \
+    --wallet-key ~/.secrets/eth_wallet.json \
+    --rpc https://mainnet.base.org \
+    --swap-to 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \
+    --asset-out USDC --decimals-out 6
+```
+Logs two entries automatically: ETH out + USDC in.
+
 ```bash
 python3 agentwallet/scripts/log_transaction.py <amount> <asset> <network> <to> <purpose> [options]
 ```
@@ -55,6 +65,10 @@ python3 agentwallet/scripts/log_transaction.py 0.02 USDC Base 0xRecipient "manua
 | `--output <path>` | Path to `agentwallet.json`. **Required** — ask your human if unsure. |
 | `--tx-hash <hash>` | Skip broadcast, log an existing hash only. |
 | `--direction <sent\|received>` | Direction of the transaction. Default: `sent`. Use `received` to log incoming transactions (requires `--tx-hash`). |
+| `--swap-to <contract>` | Output token contract address — triggers Uniswap V3 swap instead of transfer. |
+| `--asset-out <symbol>` | Output asset symbol for the log (default: TOKEN). |
+| `--decimals-out <int>` | Output token decimals (default: 6). |
+| `--fee <int>` | Uniswap V3 pool fee tier in bps (default: 500 = 0.05%). |
 
 ## Wallet JSON format
 
