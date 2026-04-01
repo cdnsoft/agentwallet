@@ -79,7 +79,8 @@ def parse_args(argv):
 
     flags = [
         "--wallet-key", "--rpc", "--contract", "--output", "--tx-hash",
-        "--decimals", "--direction", "--swap-to", "--decimals-out", "--fee", "--asset-out", "--min-out"
+        "--decimals", "--direction", "--swap-to", "--decimals-out", "--fee", "--asset-out", "--min-out",
+        "--amount", "--asset", "--network", "--from", "--to", "--purpose"
     ]
     positional = []
 
@@ -95,15 +96,18 @@ def parse_args(argv):
             positional.append(args[i])
             i += 1
 
-    if len(positional) < 5:
+    # Positional args take precedence; named flags (--amount etc.) fill in if positionals absent
+    if len(positional) >= 5:
+        opts["amount"]  = positional[0]
+        opts["asset"]   = positional[1]
+        opts["network"] = positional[2]
+        opts.setdefault("to", positional[3])
+        opts.setdefault("purpose", positional[4])
+    elif not (opts.get("direction") == "received" and opts.get("tx_hash") and
+              opts.get("amount") and opts.get("asset")):
         print(__doc__)
         sys.exit(1)
 
-    opts["amount"]  = positional[0]
-    opts["asset"]   = positional[1]
-    opts["network"] = positional[2]
-    opts["to"]      = positional[3]
-    opts["purpose"] = positional[4]
     return opts
 
 
@@ -203,11 +207,11 @@ def sign_and_send(account, rpc_url, tx_fields):
 def main():
     opts = parse_args(sys.argv)
 
-    amount  = opts["amount"]
-    asset   = opts["asset"]
-    network = opts["network"]
-    to      = opts["to"]
-    purpose = opts["purpose"]
+    amount  = opts.get("amount", "")
+    asset   = opts.get("asset", "")
+    network = opts.get("network", "Base")
+    to      = opts.get("to", "")
+    purpose = opts.get("purpose", "")
 
     if "output" not in opts:
         print("⚠️  --output is required: path to your agentwallet.json log file.")
@@ -234,7 +238,7 @@ def main():
             "amount":    amount,
             "asset":     asset,
             "network":   network,
-            "from":      to,
+            "from":      opts.get("from") or to,
             "purpose":   purpose,
             "tx_hash":   tx_hash,
         })
