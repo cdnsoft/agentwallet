@@ -33,6 +33,7 @@ Options:
     --swap-to <contract>         output token contract — triggers Uniswap V3 swap
     --decimals-out <int>         output token decimals (default: 6)
     --fee <int>                  Uniswap V3 pool fee tier in bps (default: 500 = 0.05%)
+    --min-out <amount>           minimum output amount in human units (slippage protection)
     --asset-out <symbol>         output asset symbol for the log (default: TOKEN)
 
 Examples:
@@ -78,7 +79,7 @@ def parse_args(argv):
 
     flags = [
         "--wallet-key", "--rpc", "--contract", "--output", "--tx-hash",
-        "--decimals", "--direction", "--swap-to", "--decimals-out", "--fee", "--asset-out"
+        "--decimals", "--direction", "--swap-to", "--decimals-out", "--fee", "--asset-out", "--min-out"
     ]
     positional = []
 
@@ -144,10 +145,12 @@ def encode_erc20_transfer(to: str, amount_int: int) -> bytes:
 
 
 def encode_uniswap_swap(token_in: str, token_out: str, fee: int,
-                        recipient: str, amount_in: int) -> bytes:
+                        recipient: str, amount_in: int,
+                        amount_out_min: int = 0) -> bytes:
     """Encode Uniswap V3 SwapRouter02 exactInputSingle calldata.
     selector: 0x04e45aaf
     params: tokenIn, tokenOut, fee, recipient, amountIn, amountOutMinimum, sqrtPriceLimitX96
+    Set amount_out_min > 0 to enable slippage protection.
     """
     selector = bytes.fromhex("04e45aaf")
     return (selector
@@ -156,7 +159,7 @@ def encode_uniswap_swap(token_in: str, token_out: str, fee: int,
         + pad_int(fee)
         + pad_addr(recipient)
         + pad_int(amount_in)
-        + pad_int(0)   # amountOutMinimum — 0 (no slippage protection, use carefully)
+        + pad_int(amount_out_min)
         + pad_int(0)   # sqrtPriceLimitX96
     )
 
@@ -284,12 +287,18 @@ def main():
         decimals_in = int(opts.get("decimals", 18))
         decimals_out= int(opts.get("decimals_out", 6))
         asset_out   = opts.get("asset_out", "TOKEN")
-        amount_in   = int(float(amount) * 10 ** decimals_in)
-        is_eth_in   = token_in.lower() == WETH.lower() and "contract" not in opts
+        amount_in    = int(float(amount) * 10 ** decimals_in)
+        is_eth_in    = token_in.lower() == WETH.lower() and "contract" not in opts
+        min_out_raw  = opts.get("min_out")
+        amount_out_min = int(float(min_out_raw) * 10 ** decimals_out) if min_out_raw else 0
+        if amount_out_min:
+            print(f"Slippage protection: min output = {min_out_raw} {asset_out}")
+        else:
+            print("⚠️  No slippage protection (--min-out not set). Use --min-out for large swaps.")
 
         calldata = encode_uniswap_swap(
             token_in if not is_eth_in else WETH,
-            token_out, fee, account.address, amount_in
+            token_out, fee, account.address, amount_in, amount_out_min
         )
 
         # snapshot output balance before swap

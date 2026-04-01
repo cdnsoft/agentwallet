@@ -69,6 +69,7 @@ python3 agentwallet/scripts/log_transaction.py 0.02 USDC Base 0xRecipient "manua
 | `--asset-out <symbol>` | Output asset symbol for the log (default: TOKEN). |
 | `--decimals-out <int>` | Output token decimals (default: 6). |
 | `--fee <int>` | Uniswap V3 pool fee tier in bps (default: 500 = 0.05%). |
+| `--min-out <amount>` | Minimum output amount in human units (e.g. `2.4`). Enables slippage protection — swap reverts if output is below this. Recommended for larger swaps. |
 
 ## Wallet JSON format
 
