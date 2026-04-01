@@ -1,38 +1,37 @@
 ---
 name: agentwallet
-description: Log financial transactions (x402 payments, crypto swaps, on-chain actions) to a public agentwallet.json file and commit to git. Use whenever an agent spends money autonomously — x402 API calls, USDC payments, ETH swaps, or any blockchain transaction. Ensures financial transparency by making every autonomous spend auditable. Use log_transaction.sh to record each tx immediately after it occurs.
+description: EVM wallet tool for autonomous agents with built-in accountability. Creates, signs, and broadcasts ETH and ERC20 transfers on any EVM-compatible chain, then immediately logs every transaction to an append-only JSON file committed to git. Use whenever an agent needs to spend crypto autonomously — x402 payments, USDC transfers, ETH sends — with a public auditable record of every transaction.
 ---
 
-# Treasury Log
+# agentwallet
 
-Structural financial transparency for autonomous agents. Every transaction gets logged to `agentwallet.json`, committed, and pushed. The log is append-only and public.
+EVM wallet with accountability for autonomous agents. Every transaction — create, sign, broadcast — is immediately logged to `agentwallet.json` and committed to git. The log is append-only and public.
 
-## Setup
-
-Requires a `agentwallet.json` file in the workspace root:
-
-```json
-{"transactions":[]}
-```
-
-The script creates it automatically if missing.
-
-## Log a Transaction
+## Install
 
 ```bash
-python3 log_transaction.py <amount> <asset> <network> <to> <purpose> [options]
+git clone https://github.com/cdnsoft/agentwallet
+pip install -r agentwallet/requirements.txt
 ```
 
-**Native ETH transfer:**
+Dependencies: `eth-account`, `requests` (Python 3.6+)
+
+## Usage
+
 ```bash
-python3 log_transaction.py 0.001 ETH Base 0xRecipient "fund wallet" \
+python3 agentwallet/scripts/log_transaction.py <amount> <asset> <network> <to> <purpose> [options]
+```
+
+**Send ETH:**
+```bash
+python3 agentwallet/scripts/log_transaction.py 0.001 ETH Base 0xRecipient "fund wallet" \
     --wallet-key ~/.secrets/eth_wallet.json \
     --rpc https://mainnet.base.org
 ```
 
-**ERC20 transfer (e.g. USDC, 6 decimals):**
+**Send ERC20 (e.g. USDC on Base, 6 decimals):**
 ```bash
-python3 log_transaction.py 0.02 USDC Base 0xRecipient "GateSkip captcha" \
+python3 agentwallet/scripts/log_transaction.py 0.02 USDC Base 0xRecipient "GateSkip captcha" \
     --wallet-key ~/.secrets/eth_wallet.json \
     --rpc https://mainnet.base.org \
     --contract 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \
@@ -41,25 +40,31 @@ python3 log_transaction.py 0.02 USDC Base 0xRecipient "GateSkip captcha" \
 
 **Log only (no broadcast):**
 ```bash
-python3 log_transaction.py 0.02 USDC Base 0xRecipient "manual payment" \
-    --tx-hash 0xabc123... \
-    --output /path/to/agentwallet.json
+python3 agentwallet/scripts/log_transaction.py 0.02 USDC Base 0xRecipient "manual payment" \
+    --tx-hash 0xabc123...
 ```
 
-Options:
-- `--wallet-key` — path to JSON file with `private_key` field
-- `--rpc` — EVM RPC endpoint
-- `--contract` — ERC20 contract address (omit for native ETH)
-- `--decimals` — token decimals (default: 18; USDC = 6)
-- `--output` — path to agentwallet.json (default: workspace root)
-- `--tx-hash` — skip broadcast, log existing hash only
+## Options
 
-Dependencies (see `requirements.txt`):
-```bash
-pip install -r requirements.txt
+| Option | Description |
+|--------|-------------|
+| `--wallet-key <path>` | JSON file with `"private_key"` field. Required for broadcasting. |
+| `--rpc <url>` | EVM-compatible RPC endpoint. Required for broadcasting. |
+| `--contract <addr>` | ERC20 contract address. Omit for native ETH. |
+| `--decimals <int>` | Token decimals. Default: 18. USDC = 6. |
+| `--output <path>` | Path to `agentwallet.json`. Default: current directory. |
+| `--tx-hash <hash>` | Skip broadcast, log an existing hash only. |
+
+## Wallet JSON format
+
+```json
+{ "private_key": "0x..." }
 ```
 
-Output format in `agentwallet.json`:
+Keep at `chmod 600`. Never commit to git.
+
+## Log format
+
 ```json
 {
   "transactions": [
@@ -68,8 +73,9 @@ Output format in `agentwallet.json`:
       "amount": "0.02",
       "asset": "USDC",
       "network": "Base",
-      "purpose": "GateSkip FunCaptcha solve",
-      "tx_hash": "0xdef456..."
+      "to": "0xRecipient...",
+      "purpose": "GateSkip captcha solve",
+      "tx_hash": "0xabc123..."
     }
   ]
 }
@@ -78,6 +84,9 @@ Output format in `agentwallet.json`:
 ## Rules
 
 - Log **before or immediately after** every transaction — never batch or defer
-- Use `"pending"` for tx hash if not yet confirmed, update when known
-- `agentwallet.json` is append-only — never modify past entries
-- After logging, git commit + push happens automatically
+- Use `"pending"` for tx hash if not yet confirmed
+- The log is append-only — never modify past entries
+
+## Docs
+
+Full documentation: https://cdnsoft.github.io/agentwallet
