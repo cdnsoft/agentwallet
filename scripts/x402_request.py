@@ -19,7 +19,9 @@ Usage:
         [--method <GET|POST|...>] \\
         [--header "Key: Value"]   \\
         [--body <json string>]    \\
-        [--network <name>]
+        [--network <name>]        \\
+        [--max-amount <float>]    \\
+        [--pay-to <address>]
 
 Options:
     --url <url>              Target API endpoint (required)
@@ -31,6 +33,10 @@ Options:
     --header <Key: Value>    HTTP header to include (repeatable)
     --body <json>            JSON request body as string
     --network <name>         Network name for the log (default: Base)
+    --max-amount <float>     Maximum USDC amount you consent to pay (e.g. 0.02).
+                             Script aborts if the server requests more. Recommended.
+    --pay-to <address>       Expected payTo address. Script aborts if the server
+                             returns a different address. Recommended.
 
 Examples:
     # Send a paid email via Actors.dev
@@ -74,7 +80,7 @@ def parse_args(argv):
     while i < len(args):
         flag = args[i]
         if flag in ("--url", "--wallet-key", "--rpc", "--output", "--purpose",
-                    "--method", "--body", "--network"):
+                    "--method", "--body", "--network", "--max-amount", "--pay-to"):
             opts[flag.lstrip("-").replace("-", "_")] = args[i + 1]
             i += 2
         elif flag == "--header":
@@ -239,7 +245,26 @@ def main():
     accepted    = requirement["accepts"][0]
     amount_atomic = int(accepted.get("maxAmountRequired") or accepted["amount"])
     amount_human  = amount_atomic / 1e6  # USDC has 6 decimals
-    print(f"Payment required: {amount_human} USDC on {accepted['network']}")
+    print(f"Payment required: {amount_human} USDC → {accepted['payTo']} on {accepted['network']}")
+
+    # ── Safety checks before signing ─────────────────────────────────────────
+    max_amount = opts.get("max_amount")
+    if max_amount is not None:
+        if amount_human > float(max_amount):
+            print(f"❌ Aborted: server requested {amount_human} USDC but --max-amount is {max_amount}")
+            sys.exit(1)
+        print(f"✅ Amount check passed: {amount_human} ≤ {max_amount} USDC")
+    else:
+        print(f"⚠️  No --max-amount set. Signing for {amount_human} USDC without a cap.")
+
+    expected_pay_to = opts.get("pay_to")
+    if expected_pay_to is not None:
+        if accepted["payTo"].lower() != expected_pay_to.lower():
+            print(f"❌ Aborted: server payTo is {accepted['payTo']} but --pay-to expects {expected_pay_to}")
+            sys.exit(1)
+        print(f"✅ payTo check passed: {accepted['payTo']}")
+    else:
+        print(f"⚠️  No --pay-to set. Signing payment to {accepted['payTo']} without address verification.")
 
     # Step 2: sign
     print("Signing EIP-712 authorization...")

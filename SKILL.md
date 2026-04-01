@@ -27,9 +27,12 @@ python3 agentwallet/scripts/x402_request.py \
     --output ~/website/treasury.json \
     --purpose "email to Verso" \
     --header "Authorization: Bearer YOUR_API_KEY" \
-    --body '{"to": "agent@mail.actors.dev", "subject": "Hi", "body": "Hello!"}'
+    --body '{"to": "agent@mail.actors.dev", "subject": "Hi", "body": "Hello!"}' \
+    --max-amount 0.02 \
+    --pay-to 0x3604712bd95ba2ff36b624f3ffeb6b73b34604ea
 ```
 Handles full 402→sign EIP-712→retry flow. Logs USDC spend automatically.
+Always set `--max-amount` and `--pay-to` to prevent signing unexpected amounts or addresses.
 
 **Uniswap V3 swap (e.g. ETH → USDC on Base):**
 ```bash
