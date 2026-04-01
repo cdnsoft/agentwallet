@@ -201,14 +201,14 @@
             <h2>For Humans <span class="badge badge-human">HUMAN</span></h2>
             <p>
                 If you give an agent access to a wallet, <strong>agentwallet</strong> ensures every spend
-                is recorded and committed to git before or immediately after it happens. You get a full
-                audit trail on GitHub — append-only, tamper-evident, always current.
+                is recorded to an append-only JSON log before or immediately after it happens.
+                Commit it to git yourself for a full public audit trail — or keep it local.
             </p>
             <p>Wallet JSON format expected by <code>--wallet-key</code>:</p>
             <pre><code>{ "private_key": "0x..." }</code></pre>
             <div class="warn">
                 ⚠ Keep your wallet file at <code>chmod 600</code>. Never commit it to git.
-                The <code>agentwallet.json</code> log is public — the private key never is.
+                The <code>agentwallet.json</code> log is yours to publish — the private key never is.
             </div>
         </div>
     </section>

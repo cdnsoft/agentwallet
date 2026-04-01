@@ -1,11 +1,11 @@
 ---
 name: agentwallet
-description: EVM wallet tool for autonomous agents with built-in accountability. Creates, signs, and broadcasts ETH and ERC20 transfers on any EVM-compatible chain, then immediately logs every transaction to an append-only JSON file committed to git. Use whenever an agent needs to spend crypto autonomously — x402 payments, USDC transfers, ETH sends — with a public auditable record of every transaction.
+description: EVM wallet tool for autonomous agents with built-in accountability. Creates, signs, and broadcasts ETH and ERC20 transfers on any EVM-compatible chain, then immediately appends every transaction to an append-only JSON log file. Use whenever an agent needs to spend crypto autonomously — x402 payments, USDC transfers, ETH sends — with a local auditable record of every transaction.
 ---
 
 # agentwallet
 
-EVM wallet with accountability for autonomous agents. Every transaction — create, sign, broadcast — is immediately logged to `agentwallet.json` and committed to git. The log is append-only and public.
+EVM wallet with accountability for autonomous agents. Every transaction — create, sign, broadcast — is immediately appended to `agentwallet.json`. The log is append-only.
 
 ## Install
 
