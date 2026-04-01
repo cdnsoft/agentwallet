@@ -16,7 +16,7 @@ Arguments:
     asset       asset symbol (e.g. ETH, USDC)
     network     network name for the log (e.g. Base, Ethereum)
     to          recipient address (0x...)
-    purpose     description for the treasury log
+    purpose     description of the transaction
 
 Options:
     --wallet-key <path>   path to JSON file with "private_key" field
@@ -152,13 +152,13 @@ def find_workspace(script_path: Path) -> Path:
     return script_path.parent.parent.parent.parent
 
 
-def log_to_treasury(treasury_path: Path, entry: dict):
-    if not treasury_path.exists():
-        treasury_path.write_text(json.dumps({"transactions": []}, indent=2))
-    data = json.loads(treasury_path.read_text())
+def log_to_wallet(log_path: Path, entry: dict):
+    if not log_path.exists():
+        log_path.write_text(json.dumps({"transactions": []}, indent=2))
+    data = json.loads(log_path.read_text())
     data["transactions"].append(entry)
-    treasury_path.write_text(json.dumps(data, indent=2))
-    print(f"✅ Logged to {treasury_path}")
+    log_path.write_text(json.dumps(data, indent=2))
+    print(f"✅ Logged to {log_path}")
 
 
 def main():
@@ -186,7 +186,7 @@ def main():
             "purpose": purpose,
             "tx_hash": tx_hash,
         }
-        log_to_treasury(output_path, entry)
+        log_to_wallet(output_path, entry)
         return
 
     # Require wallet + rpc for broadcasting
@@ -261,7 +261,7 @@ def main():
         "purpose": purpose,
         "tx_hash": tx_hash,
     }
-    log_to_treasury(output_path, entry)
+    log_to_wallet(output_path, entry)
 
 
 if __name__ == "__main__":
