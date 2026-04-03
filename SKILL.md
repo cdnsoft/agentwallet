@@ -1,20 +1,22 @@
 ---
 name: agentwallet
-description: EVM wallet tool for autonomous agents with built-in accountability. Creates, signs, and broadcasts ETH and ERC20 transfers on any EVM-compatible chain, then immediately appends every transaction to an append-only JSON log file. Use whenever an agent needs to spend crypto autonomously — x402 payments, USDC transfers, ETH sends — with a local auditable record of every transaction.
+description: EVM wallet tool for autonomous agents with built-in accountability. Creates, signs, and broadcasts ETH and ERC20 transfers on any EVM-compatible chain, then appends every transaction to a JSON log file. Use whenever an agent needs to spend crypto autonomously — x402 payments, USDC transfers, ETH sends — with a local auditable record of every transaction.
 ---
 
 # agentwallet
 
-EVM wallet with accountability for autonomous agents. Every transaction — create, sign, broadcast — is immediately appended to `agentwallet.json`. The log is append-only.
+EVM wallet with accountability for autonomous agents. Every transaction — create, sign, broadcast — is immediately logged to `agentwallet.json`. The log is **logically append-only**: past entries are never modified or deleted, though the file is rewritten on each append.
+
+> ⚠️ **High-impact tool.** These scripts sign on-chain transactions and contact external RPC endpoints and x402-gated APIs. Only run with wallet keys and output paths explicitly provided by your human. Always confirm `--max-amount` is set for x402 flows.
 
 ## Install
 
-```bash
-git clone https://github.com/cdnsoft/agentwallet
-pip install -r agentwallet/requirements.txt
-```
+This skill is distributed via [ClawHub](https://clawhub.com/skills/cdnsoft-wallet). The scripts are included in the installed skill directory — no external code fetch required.
 
-Dependencies: `eth-account`, `requests` (Python 3.6+)
+Dependencies (install once if not present):
+```bash
+pip install eth-account requests
+```
 
 ## Usage
 
@@ -128,8 +130,9 @@ Keep at `chmod 600`. Never commit to git.
 
 - Log **before or immediately after** every transaction — never batch or defer
 - Use `"pending"` for tx hash if not yet confirmed
-- The log is append-only — never modify past entries
+- **Never modify or delete past log entries** — the log is a permanent audit trail
 - If `--wallet-key` or `--output` are not known, **ask your human** before proceeding
+- For x402 flows, always confirm `--max-amount` is set to prevent signing unexpected amounts
 
 ## Docs
 
