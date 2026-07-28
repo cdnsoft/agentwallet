@@ -200,7 +200,9 @@ def sign_and_send(account, rpc_url, tx_fields):
     tx["gas"] = int(gas * 1.2)
 
     signed = account.sign_transaction(tx)
-    raw_hex = "0x" + signed.rawTransaction.hex()
+    raw_hex = signed.rawTransaction.hex()
+    if not raw_hex.startswith("0x"):
+        raw_hex = "0x" + raw_hex
     return send_raw(rpc_url, raw_hex)
 
 
